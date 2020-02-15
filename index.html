@@ -1,0 +1,70 @@
+<!doctype html>
+
+<html>
+
+  </head>
+    <title>Humanize Pay</title>
+  </head>
+
+  <body>
+    <button class="connect">Connect</button>
+
+    <p>
+      <input
+      type="text"
+      id="domain"
+      placeholder="Domain"
+    />
+    <input
+      type="text"
+      id="currency"
+      placeholder="Currency"
+    />
+    <button id="resolveBtn" class="btn btn-primary">Resolve</button>
+    <span class="addOutput"></span>
+    </p>
+  </body>
+
+  <script>
+
+    const snapId = new URL('package.json', window.location.href).toString()
+
+    const connectButton = document.querySelector('button.connect')
+
+    const domain = document.querySelector("#domain");
+    const currency = document.querySelector("#currency");
+    const resolveBtn = document.querySelector("#resolveBtn");
+    const addOutput = document.querySelector('span.addOutput')
+
+    connectButton.addEventListener('click', connect)
+    resolveBtn.addEventListener('click', resolve)
+
+    async function connect () {
+      await ethereum.send({
+        method: 'wallet_enable',
+        params: [{
+          wallet_plugin: { [snapId]: {} },
+        }]
+      })
+    }
+
+    async function resolve () {
+      try {
+        const response = await ethereum.send({
+          method: 'wallet_invokePlugin',
+          params: [snapId, {
+            method: 'resolve',
+            params: [ domain.value, currency.value ],
+          }]
+        })
+        addOutput.innerText = response
+      } catch (err) {
+        console.error(err)
+        addOutput.innerText = `Problem getting: ${JSON.stringify(err)}`
+      }
+    }
+
+
+  </script>
+
+</html>
