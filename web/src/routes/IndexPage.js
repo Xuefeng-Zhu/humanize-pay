@@ -1,12 +1,18 @@
 import React from "react";
 import { connect } from "dva";
 import { Card, Button, message } from "antd";
-import { Keyring, bip32ToAddressNList } from "@shapeshiftoss/hdwallet-core";
+import {
+  Keyring,
+  bip32ToAddressNList,
+  Events,
+  supportsETH
+} from "@shapeshiftoss/hdwallet-core";
 import { WebUSBKeepKeyAdapter } from "@shapeshiftoss/hdwallet-keepkey-webusb";
 import { PortisAdapter } from "@shapeshiftoss/hdwallet-portis";
 import Web3 from "web3";
 
 import Form from "../components/form";
+import PinModal from "../components/PinModal";
 import styles from "./IndexPage.css";
 
 const portisAppId = "cbc2b8a9-9381-4e62-9202-002dd1290727";
@@ -26,32 +32,81 @@ class IndexPage extends React.Component {
   constructor(props) {
     super(props);
     this.form = React.createRef();
-    this.state = {};
+    this.state = { showPinModal: false };
 
-    const keyring = new Keyring();
-    this.portisAdapter = PortisAdapter.useKeyring(keyring, { portisAppId });
+    this.keyring = new Keyring();
+    this.keyring.onAny((name, ...values) => {
+      const [[deviceId, event]] = values;
+      const { from_wallet = false, message_type } = event;
+      let direction = from_wallet ? "🔑" : "💻";
+      console.log(`${direction} ${message_type}`, event);
+    });
+
+    this.portisAdapter = PortisAdapter.useKeyring(this.keyring, {
+      portisAppId
+    });
     this.portisAdapter.initialize();
+    this.keepkeyAdapter = WebUSBKeepKeyAdapter.useKeyring(this.keyring);
+    this.keepkeyAdapter.initialize(
+      undefined,
+      /*tryDebugLink=*/ true,
+      /*autoConnect=*/ false
+    );
 
     this.snapId = new URL("package.json", "http://localhost:8086").toString();
 
-    window.ethereum.send({
-      method: "wallet_enable",
-      params: [
-        {
-          wallet_plugin: { [this.snapId]: {} }
-        }
-      ]
-    });
+    // window.ethereum.send({
+    //   method: "wallet_enable",
+    //   params: [
+    //     {
+    //       wallet_plugin: { [this.snapId]: {} }
+    //     }
+    //   ]
+    // });
   }
 
-  handlePair = () => {
+  handlePairPortis = () => {
     this.portisAdapter.pairDevice().then(wallet => {
       this.wallet = wallet;
-      debugger;
     });
   };
 
+  handlePairKeepkey = () => {
+    this.keepkeyAdapter
+      .pairDevice(undefined, /*tryDebugLink=*/ true)
+      .then(wallet => {
+        wallet.transport.connect().then(() => {
+          wallet.initialize();
+          this.wallet = wallet;
+          wallet.transport.on(Events.PIN_REQUEST, e => {
+            this.setState({ showPinModal: true });
+          });
+          console.log(wallet.transport.getDeviceID());
+        });
+      });
+  };
+
+  hanldePinInput = pin => {
+    this.wallet.sendPin(pin);
+    this.setState({ showPinModal: false });
+  };
+
   handlePay = () => {
+    debugger;
+
+    supportsETH(this.wallet);
+    // return;
+    this.wallet.ethSignTx({
+      addressNList: bip32ToAddressNList("m/44'/60'/0'/0/0"),
+      nonce: "0x0",
+      gasPrice: "0x5FB9ACA00",
+      gasLimit: "0x186A0",
+      value: web3.utils.toWei("1", "ether"),
+      to: "0x88f06eBF28f71EB024399503B5F37e0F5045cB29",
+      chainId: 1
+    });
+
+    return;
     this.form.current.validateFields((err, values) => {
       if (err) {
         return;
@@ -154,7 +209,12 @@ class IndexPage extends React.Component {
 
     return (
       <Card title="Humanize Pay">
-        <Button onClick={this.handlePair}>Pair Wallet</Button>
+        <PinModal
+          visible={this.state.showPinModal}
+          onOk={this.hanldePinInput}
+        />
+        <Button onClick={this.handlePairPortis}>Pair Portis</Button>
+        <Button onClick={this.handlePairKeepkey}>Pair Keepkey</Button>
         <Form
           ref={this.form}
           items={formItems}
