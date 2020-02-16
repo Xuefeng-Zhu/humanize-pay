@@ -1,11 +1,10 @@
 import React from "react";
 import { connect } from "dva";
-import { Card, Button, message } from "antd";
+import { Card, Button, message, Icon } from "antd";
 import {
   Keyring,
   bip32ToAddressNList,
-  Events,
-  supportsETH
+  Events
 } from "@shapeshiftoss/hdwallet-core";
 import { WebUSBKeepKeyAdapter } from "@shapeshiftoss/hdwallet-keepkey-webusb";
 import { PortisAdapter } from "@shapeshiftoss/hdwallet-portis";
@@ -21,6 +20,10 @@ const BTC = "BTC";
 const BCH = "BCH";
 const LTC = "LTC";
 const DOGE = "DOGE";
+const gridStyle = {
+  width: "50%",
+  textAlign: "center"
+};
 
 const web3 = new Web3(
   new Web3.providers.HttpProvider(
@@ -32,7 +35,7 @@ class IndexPage extends React.Component {
   constructor(props) {
     super(props);
     this.form = React.createRef();
-    this.state = { showPinModal: false };
+    this.state = { showPinModal: false, paired: false };
 
     this.keyring = new Keyring();
     this.keyring.onAny((name, ...values) => {
@@ -68,6 +71,7 @@ class IndexPage extends React.Component {
   handlePairPortis = () => {
     this.portisAdapter.pairDevice().then(wallet => {
       this.wallet = wallet;
+      this.setState({ paired: true });
     });
   };
 
@@ -77,36 +81,22 @@ class IndexPage extends React.Component {
       .then(wallet => {
         wallet.transport.connect().then(() => {
           wallet.initialize();
-          this.wallet = wallet;
           wallet.transport.on(Events.PIN_REQUEST, e => {
             this.setState({ showPinModal: true });
           });
-          console.log(wallet.transport.getDeviceID());
+          this.wallet = wallet;
+          this.setState({ paired: true });
         });
       });
   };
 
   hanldePinInput = pin => {
+    console.log(pin);
     this.wallet.sendPin(pin);
     this.setState({ showPinModal: false });
   };
 
   handlePay = () => {
-    debugger;
-
-    supportsETH(this.wallet);
-    // return;
-    this.wallet.ethSignTx({
-      addressNList: bip32ToAddressNList("m/44'/60'/0'/0/0"),
-      nonce: "0x0",
-      gasPrice: "0x5FB9ACA00",
-      gasLimit: "0x186A0",
-      value: web3.utils.toWei("1", "ether"),
-      to: "0x88f06eBF28f71EB024399503B5F37e0F5045cB29",
-      chainId: 1
-    });
-
-    return;
     this.form.current.validateFields((err, values) => {
       if (err) {
         return;
@@ -138,7 +128,7 @@ class IndexPage extends React.Component {
                   nonce: "0x0",
                   gasPrice: "0x5FB9ACA00",
                   gasLimit: "0x186A0",
-                  value: web3.utils.toWei(value, "ether"),
+                  value: web3.utils.toHex(web3.utils.toWei(value, "ether")),
                   to: address,
                   chainId: 1
                 })
@@ -163,6 +153,7 @@ class IndexPage extends React.Component {
   handleValueChange = changedValue => this.setState(changedValue);
 
   render() {
+    const { showPinModal, paired } = this.state;
     const currencyOptions = [
       [ETH, ETH],
       [BTC, BTC],
@@ -209,20 +200,30 @@ class IndexPage extends React.Component {
 
     return (
       <Card title="Humanize Pay">
-        <PinModal
-          visible={this.state.showPinModal}
-          onOk={this.hanldePinInput}
-        />
-        <Button onClick={this.handlePairPortis}>Pair Portis</Button>
-        <Button onClick={this.handlePairKeepkey}>Pair Keepkey</Button>
-        <Form
-          ref={this.form}
-          items={formItems}
-          onValuesChange={this.handleValueChange}
-        />
-        <Button className={styles.payBtn} onClick={this.handlePay}>
-          Pay
-        </Button>
+        <PinModal visible={showPinModal} onOk={this.hanldePinInput} />
+        {paired ? (
+          <Card type="inner" title="Send Payment">
+            <Form
+              ref={this.form}
+              items={formItems}
+              onValuesChange={this.handleValueChange}
+            />
+            <Button className={styles.payBtn} onClick={this.handlePay}>
+              Pay
+            </Button>
+          </Card>
+        ) : (
+          <Card type="inner" title="Pair Device">
+            <Card.Grid style={gridStyle} onClick={this.handlePairPortis}>
+              <Icon type="heat-map" />
+              Pair Portis
+            </Card.Grid>
+            <Card.Grid style={gridStyle} onClick={this.handlePairKeepkey}>
+              <Icon type="usb" />
+              Pair Keepkey
+            </Card.Grid>
+          </Card>
+        )}
       </Card>
     );
   }

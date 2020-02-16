@@ -24,11 +24,21 @@ class PinModal extends React.Component {
     this.setState({ pin });
   };
 
+  handleeSubmit = () => {
+    const { onOk } = this.props;
+    onOk(this.state.pin);
+  };
+
   render() {
-    const { visible, onOk } = this.props;
+    const { visible } = this.props;
 
     return (
-      <Modal title="Enter PIN" visible={visible} onOk={onOk} closable={false}>
+      <Modal
+        title="Enter PIN"
+        visible={visible}
+        onOk={this.handleeSubmit}
+        closable={false}
+      >
         <p>
           Use the PIN layout shown on your device to find the location to press
           on this PIN pad.
@@ -97,11 +107,11 @@ class PinModal extends React.Component {
             >
               &#x25CF;
             </Button>
-            <Input.Search
+            <Input
               type="password"
               size="large"
               value={this.state.pin}
-              enterButton={
+              addonAfter={
                 <Button onClick={() => this.handlePinDigit("")} icon="left" />
               }
             />
