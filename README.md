@@ -1,7 +1,12 @@
-# IPFS Snap Example
+# Humanize Pay
 
-To run: install the `snap` utility by installing with `npm i -g ../../` from this folder.
+Send payment for multiple currency using domain name
 
-Then run `snap serve` from this folder.
+## Run
 
-Make sure you're running the [Snaps beta branch](https://github.com/MetaMask/metamask-snaps-beta) of MetaMask.
+1. npm install
+1. mm-snap build
+1. mm-snap s
+1. cd web
+1. npm install
+1. npm start
