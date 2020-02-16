@@ -58,14 +58,14 @@ class IndexPage extends React.Component {
 
     this.snapId = new URL("package.json", "http://localhost:8086").toString();
 
-    // window.ethereum.send({
-    //   method: "wallet_enable",
-    //   params: [
-    //     {
-    //       wallet_plugin: { [this.snapId]: {} }
-    //     }
-    //   ]
-    // });
+    window.ethereum.send({
+      method: "wallet_enable",
+      params: [
+        {
+          wallet_plugin: { [this.snapId]: {} }
+        }
+      ]
+    });
   }
 
   handlePairPortis = () => {
