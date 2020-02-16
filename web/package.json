@@ -3,16 +3,21 @@
   "scripts": {
     "start": "roadhog server",
     "build": "roadhog build",
-    "lint": "eslint --ext .js src test",
-    "precommit": "npm run lint"
+    "lint": "eslint --ext .js src test"
   },
   "dependencies": {
+    "@shapeshiftoss/hdwallet-core": "^0.18.4",
+    "@shapeshiftoss/hdwallet-keepkey-webusb": "^0.18.4",
+    "@shapeshiftoss/hdwallet-portis": "^0.18.4",
     "antd": "^3.10.0",
     "axios": "^0.18.0",
+    "bitcore-explorers": "^1.0.1",
+    "bitcore-lib": "^8.16.0",
     "dva": "^2.4.0",
     "lodash": "^4.17.11",
     "react": "^16.2.0",
-    "react-dom": "^16.2.0"
+    "react-dom": "^16.2.0",
+    "web3": "^1.2.6"
   },
   "devDependencies": {
     "babel-plugin-dva-hmr": "^0.4.1",
