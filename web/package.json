@@ -10,7 +10,7 @@
     "@shapeshiftoss/hdwallet-keepkey-webusb": "^0.18.4",
     "@shapeshiftoss/hdwallet-portis": "^0.18.4",
     "antd": "^3.10.0",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "bitcore-explorers": "^1.0.1",
     "bitcore-lib": "^8.16.0",
     "dva": "^2.4.0",
